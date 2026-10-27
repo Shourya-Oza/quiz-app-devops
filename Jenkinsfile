@@ -3,8 +3,9 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'quiz-app'
+        IMAGE_NAME = 'shanhdplus/quiz-app'
         IMAGE_TAG  = 'v1'
+        DOCKER_EXE  = 'C:\\Users\\kings\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe'
     }
 
     stages {
@@ -21,16 +22,35 @@ pipeline {
             }
         }
 
-        
-        
         stage('Build Docker Image') {
             steps {
-                bat '''
-                    "C:\\Users\\kings\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" build -t quiz-app:v1 .
-                '''
+                bat '"%DOCKER_EXE%" build -t %IMAGE_NAME%:%IMAGE_TAG% .'
+            }
+        }
+
+        
+        stage('Login to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKERHUB_USER',
+                    passwordVariable: 'DOCKERHUB_TOKEN'
+                )]) {
+                    bat '''
+                        @echo off
+                        setlocal
+                        echo %DOCKERHUB_TOKEN% | "%DOCKER_EXE%" login -u "%DOCKERHUB_USER%" --password-stdin
+                        exit /b %ERRORLEVEL%
+                    '''
+                }
             }
         }
 
 
+        stage('Push Docker Image') {
+            steps {
+                bat '"%DOCKER_EXE%" push %IMAGE_NAME%:%IMAGE_TAG%'
+            }
+        }
     }
 }
