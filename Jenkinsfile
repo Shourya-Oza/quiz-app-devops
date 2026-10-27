@@ -26,40 +26,19 @@ pipeline {
                 bat '"%DOCKER_EXE%" build -t %IMAGE_NAME%:%IMAGE_TAG% .'
             }
         }
-         
         
-        stage('Login to Docker Hub') {
+        stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKERHUB_USER',
-                    passwordVariable: 'DOCKERHUB_TOKEN'
-                )]) {
-                    powershell '''
-                        $username = $env:DOCKERHUB_USER.Trim()
-                        $token = $env:DOCKERHUB_TOKEN.Trim()
-
-                        Write-Output "Docker Hub username: $username"
-                        Write-Output "Token present: $([bool]$token)"
-                        Write-Output "Token length: $($token.Length)"
-
-                        $token | & "$env:DOCKER_EXE" login `
-                            --username $username `
-                            --password-stdin
-
-                        if ($LASTEXITCODE -ne 0) {
-                            exit $LASTEXITCODE
-                        }
-                    '''
+                script {
+                    docker.withRegistry(
+                        'https://index.docker.io/v1/',
+                        'dockerhub-creds'
+                    ) {
+                        bat '"%DOCKER_EXE%" push %IMAGE_NAME%:%IMAGE_TAG%'
+                    }
                 }
             }
         }
 
-
-        stage('Push Docker Image') {
-            steps {
-                bat '"%DOCKER_EXE%" push %IMAGE_NAME%:%IMAGE_TAG%'
-            }
-        }
     }
 }
