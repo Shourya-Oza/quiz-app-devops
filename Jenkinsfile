@@ -27,10 +27,8 @@ pipeline {
                 bat '"%DOCKER_EXE%" build -t %IMAGE_NAME%:%IMAGE_TAG% .'
             }
         }
-
         
-        
-        stage('Login to Docker Hub') {
+        stage('Check Docker Hub Credential') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
@@ -38,19 +36,13 @@ pipeline {
                     passwordVariable: 'DOCKERHUB_TOKEN'
                 )]) {
                     powershell '''
-                        $env:DOCKERHUB_TOKEN |
-                            & "$env:DOCKER_EXE" login `
-                                --username "$env:DOCKERHUB_USER" `
-                                --password-stdin
-                        if ($LASTEXITCODE -ne 0) {
-                            exit $LASTEXITCODE
-                        }
+                        Write-Output "Docker Hub username: $env:DOCKERHUB_USER"
+                        Write-Output "Token is present: $([bool]$env:DOCKERHUB_TOKEN)"
+                        Write-Output "Token length: $($env:DOCKERHUB_TOKEN.Length)"
                     '''
                 }
             }
         }
-
-
 
         stage('Push Docker Image') {
             steps {
