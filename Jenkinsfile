@@ -21,10 +21,16 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        
+        stage('Diagnose Docker') {
             steps {
-                bat 'docker build -t %IMAGE_NAME%:%IMAGE_TAG% .'
+                bat '''
+                    echo PATH=%PATH%
+                    where docker
+                    "C:\\Users\\kings\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" version
+                '''
             }
         }
+
     }
 }
