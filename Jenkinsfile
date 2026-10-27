@@ -29,6 +29,7 @@ pipeline {
         }
 
         
+        
         stage('Login to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
@@ -36,15 +37,19 @@ pipeline {
                     usernameVariable: 'DOCKERHUB_USER',
                     passwordVariable: 'DOCKERHUB_TOKEN'
                 )]) {
-                    bat '''
-                        @echo off
-                        setlocal
-                        echo %DOCKERHUB_TOKEN% | "%DOCKER_EXE%" login -u "%DOCKERHUB_USER%" --password-stdin
-                        exit /b %ERRORLEVEL%
+                    powershell '''
+                        $env:DOCKERHUB_TOKEN |
+                            & "$env:DOCKER_EXE" login `
+                                --username "$env:DOCKERHUB_USER" `
+                                --password-stdin
+                        if ($LASTEXITCODE -ne 0) {
+                            exit $LASTEXITCODE
+                        }
                     '''
                 }
             }
         }
+
 
 
         stage('Push Docker Image') {
